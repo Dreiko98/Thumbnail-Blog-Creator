@@ -1,0 +1,53 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+.eggs/
+build/
+dist/
+.cache/
+.mypy_cache/
+.pytest_cache/
+.coverage*
+htmlcov/
+
+# Entornos virtuales
+.venv/
+venv/
+env/
+.env/
+pip-wheel-metadata/
+
+# Notebooks
+.ipynb_checkpoints/
+
+# Logs / temporales
+*.log
+*.tmp
+tmp/
+*.swp
+
+# Config local
+.python-version
+
+# --- IDE / OS ---
+.vscode/
+.idea/
+*.code-workspace
+.DS_Store
+Thumbs.db
+
+# --- Salidas del script ---
+outputs/
+renders/
+thumbnails/
+export/
+*.png
+*.jpg
+*.jpeg
+*.psd
+
+# Variables de entorno
+*.env

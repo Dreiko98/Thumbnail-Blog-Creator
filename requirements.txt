@@ -1,0 +1,4 @@
+pillow
+pytoshop
+requests
+cairosvg
