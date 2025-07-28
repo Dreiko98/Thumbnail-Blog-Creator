@@ -12,7 +12,15 @@ from datetime import datetime
 import requests
 from PIL import Image, ImageDraw, ImageFont, ImageFilter
 
-# PSD (opcional)
+# PSD con psd-tools (para creación de archivos con capas)
+try:
+    from psd_tools import PSDImage
+    from psd_tools.api.layers import PixelLayer
+    PSD_TOOLS_AVAILABLE = True
+except ImportError:
+    PSD_TOOLS_AVAILABLE = False
+
+# PSD con pytoshop (fallback legacy)
 try:
     from pytoshop.user import nested_layers as nl
     PSD_AVAILABLE = True
@@ -72,62 +80,311 @@ def get_font_path():
 
 
 # ---------- Utilidades de iconos ----------
+def download_flaticon_icon(query: str) -> Image.Image:
+    """
+    Intenta descargar un icono desde Flaticon usando búsqueda libre
+    Mejorado con más iconos y mejor lógica de búsqueda
+    """
+    print(f"🌐 Intentando buscar '{query}' en Flaticon...")
+    
+    try:
+        # URLs de búsqueda en Flaticon (usando términos populares)
+        search_terms = [
+            query.lower().strip(),
+            query.lower().replace(" ", ""),
+            query.lower().replace("-", " "),
+            query.lower().replace("_", " "),
+            query.lower().replace(".", ""),
+        ]
+        
+        # Iconos populares de tecnología como fallback
+        tech_fallbacks = [
+            "computer", "laptop", "code", "programming", "software", 
+            "technology", "web", "internet", "digital", "app"
+        ]
+        
+        # Base de datos ampliada de iconos gratuitos de Flaticon
+        flaticon_free_icons = {
+            # Tecnología general
+            "code": "https://cdn-icons-png.flaticon.com/512/270/270798.png",
+            "programming": "https://cdn-icons-png.flaticon.com/512/1005/1005141.png",
+            "computer": "https://cdn-icons-png.flaticon.com/512/3474/3474360.png",
+            "laptop": "https://cdn-icons-png.flaticon.com/512/3474/3474374.png",
+            "web": "https://cdn-icons-png.flaticon.com/512/1828/1828833.png",
+            "software": "https://cdn-icons-png.flaticon.com/512/2166/2166823.png",
+            "app": "https://cdn-icons-png.flaticon.com/512/3474/3474359.png",
+            "technology": "https://cdn-icons-png.flaticon.com/512/2166/2166823.png",
+            "internet": "https://cdn-icons-png.flaticon.com/512/1828/1828833.png",
+            "digital": "https://cdn-icons-png.flaticon.com/512/2166/2166823.png",
+            "website": "https://cdn-icons-png.flaticon.com/512/1006/1006771.png",
+            "monitor": "https://cdn-icons-png.flaticon.com/512/109/109612.png",
+            "desktop": "https://cdn-icons-png.flaticon.com/512/109/109612.png",
+            
+            # Lenguajes de programación
+            "javascript": "https://cdn-icons-png.flaticon.com/512/5968/5968292.png",
+            "js": "https://cdn-icons-png.flaticon.com/512/5968/5968292.png",
+            "python": "https://cdn-icons-png.flaticon.com/512/5968/5968350.png",
+            "java": "https://cdn-icons-png.flaticon.com/512/226/226777.png",
+            "html": "https://cdn-icons-png.flaticon.com/512/732/732212.png",
+            "css": "https://cdn-icons-png.flaticon.com/512/732/732190.png",
+            "php": "https://cdn-icons-png.flaticon.com/512/919/919830.png",
+            "cpp": "https://cdn-icons-png.flaticon.com/512/6132/6132222.png",
+            "csharp": "https://cdn-icons-png.flaticon.com/512/6132/6132221.png",
+            "ruby": "https://cdn-icons-png.flaticon.com/512/919/919842.png",
+            "golang": "https://cdn-icons-png.flaticon.com/512/919/919831.png",
+            "go": "https://cdn-icons-png.flaticon.com/512/919/919831.png",
+            "rust": "https://cdn-icons-png.flaticon.com/512/5968/5968380.png",
+            
+            # Frameworks y librerías
+            "react": "https://cdn-icons-png.flaticon.com/512/1126/1126012.png",
+            "reactjs": "https://cdn-icons-png.flaticon.com/512/1126/1126012.png",
+            "vue": "https://cdn-icons-png.flaticon.com/512/1005/1005141.png",
+            "vuejs": "https://cdn-icons-png.flaticon.com/512/1005/1005141.png",
+            "angular": "https://cdn-icons-png.flaticon.com/512/5968/5968267.png",
+            "node": "https://cdn-icons-png.flaticon.com/512/919/919825.png",
+            "nodejs": "https://cdn-icons-png.flaticon.com/512/919/919825.png",
+            "express": "https://cdn-icons-png.flaticon.com/512/919/919825.png",
+            "django": "https://cdn-icons-png.flaticon.com/512/5968/5968350.png",
+            "flask": "https://cdn-icons-png.flaticon.com/512/5968/5968350.png",
+            "nextjs": "https://cdn-icons-png.flaticon.com/512/1126/1126012.png",
+            "next": "https://cdn-icons-png.flaticon.com/512/1126/1126012.png",
+            "svelte": "https://cdn-icons-png.flaticon.com/512/1005/1005141.png",
+            
+            # Base de datos
+            "database": "https://cdn-icons-png.flaticon.com/512/1231/1231179.png",
+            "db": "https://cdn-icons-png.flaticon.com/512/1231/1231179.png",
+            "mysql": "https://cdn-icons-png.flaticon.com/512/1231/1231179.png",
+            "postgresql": "https://cdn-icons-png.flaticon.com/512/1231/1231179.png",
+            "postgres": "https://cdn-icons-png.flaticon.com/512/1231/1231179.png",
+            "mongodb": "https://cdn-icons-png.flaticon.com/512/919/919836.png",
+            "mongo": "https://cdn-icons-png.flaticon.com/512/919/919836.png",
+            "redis": "https://cdn-icons-png.flaticon.com/512/1231/1231179.png",
+            "sqlite": "https://cdn-icons-png.flaticon.com/512/1231/1231179.png",
+            
+            # DevOps y herramientas
+            "server": "https://cdn-icons-png.flaticon.com/512/2906/2906274.png",
+            "cloud": "https://cdn-icons-png.flaticon.com/512/1570/1570121.png",
+            "api": "https://cdn-icons-png.flaticon.com/512/2164/2164832.png",
+            "docker": "https://cdn-icons-png.flaticon.com/512/919/919853.png",
+            "kubernetes": "https://cdn-icons-png.flaticon.com/512/2164/2164832.png",
+            "aws": "https://cdn-icons-png.flaticon.com/512/1570/1570121.png",
+            "azure": "https://cdn-icons-png.flaticon.com/512/1570/1570121.png",
+            "gcp": "https://cdn-icons-png.flaticon.com/512/1570/1570121.png",
+            "firebase": "https://cdn-icons-png.flaticon.com/512/919/919852.png",
+            "git": "https://cdn-icons-png.flaticon.com/512/270/270798.png",
+            "github": "https://cdn-icons-png.flaticon.com/512/733/733553.png",
+            "gitlab": "https://cdn-icons-png.flaticon.com/512/270/270798.png",
+            "bitbucket": "https://cdn-icons-png.flaticon.com/512/270/270798.png",
+            "jenkins": "https://cdn-icons-png.flaticon.com/512/2164/2164832.png",
+            "ci": "https://cdn-icons-png.flaticon.com/512/2164/2164832.png",
+            "cd": "https://cdn-icons-png.flaticon.com/512/2164/2164832.png",
+            
+            # Móvil y SO
+            "mobile": "https://cdn-icons-png.flaticon.com/512/619/619153.png",
+            "android": "https://cdn-icons-png.flaticon.com/512/270/270780.png",
+            "ios": "https://cdn-icons-png.flaticon.com/512/731/731985.png",
+            "windows": "https://cdn-icons-png.flaticon.com/512/732/732221.png",
+            "linux": "https://cdn-icons-png.flaticon.com/512/226/226772.png",
+            "macos": "https://cdn-icons-png.flaticon.com/512/731/731985.png",
+            "ubuntu": "https://cdn-icons-png.flaticon.com/512/226/226772.png",
+            
+            # Herramientas y editores
+            "vscode": "https://cdn-icons-png.flaticon.com/512/906/906324.png",
+            "vim": "https://cdn-icons-png.flaticon.com/512/906/906324.png",
+            "emacs": "https://cdn-icons-png.flaticon.com/512/906/906324.png",
+            "editor": "https://cdn-icons-png.flaticon.com/512/906/906324.png",
+            "ide": "https://cdn-icons-png.flaticon.com/512/906/906324.png",
+            "terminal": "https://cdn-icons-png.flaticon.com/512/2541/2541988.png",
+            "console": "https://cdn-icons-png.flaticon.com/512/2541/2541988.png",
+            "bash": "https://cdn-icons-png.flaticon.com/512/2541/2541988.png",
+            "shell": "https://cdn-icons-png.flaticon.com/512/2541/2541988.png",
+            
+            # Desarrollo web
+            "frontend": "https://cdn-icons-png.flaticon.com/512/1006/1006771.png",
+            "backend": "https://cdn-icons-png.flaticon.com/512/2906/2906274.png",
+            "fullstack": "https://cdn-icons-png.flaticon.com/512/1006/1006771.png",
+            "ui": "https://cdn-icons-png.flaticon.com/512/1006/1006771.png",
+            "ux": "https://cdn-icons-png.flaticon.com/512/1006/1006771.png",
+            "design": "https://cdn-icons-png.flaticon.com/512/1006/1006771.png",
+            "responsive": "https://cdn-icons-png.flaticon.com/512/619/619153.png",
+            
+            # AI y Machine Learning
+            "ai": "https://cdn-icons-png.flaticon.com/512/8637/8637099.png",
+            "ml": "https://cdn-icons-png.flaticon.com/512/8637/8637099.png",
+            "machinelearning": "https://cdn-icons-png.flaticon.com/512/8637/8637099.png",
+            "deeplearning": "https://cdn-icons-png.flaticon.com/512/8637/8637099.png",
+            "tensorflow": "https://cdn-icons-png.flaticon.com/512/8637/8637099.png",
+            "pytorch": "https://cdn-icons-png.flaticon.com/512/8637/8637099.png",
+            "neural": "https://cdn-icons-png.flaticon.com/512/8637/8637099.png",
+            "robot": "https://cdn-icons-png.flaticon.com/512/8637/8637099.png",
+            
+            # Otros conceptos
+            "security": "https://cdn-icons-png.flaticon.com/512/2913/2913145.png",
+            "encryption": "https://cdn-icons-png.flaticon.com/512/2913/2913145.png",
+            "blockchain": "https://cdn-icons-png.flaticon.com/512/2913/2913145.png",
+            "crypto": "https://cdn-icons-png.flaticon.com/512/2913/2913145.png",
+            "network": "https://cdn-icons-png.flaticon.com/512/1570/1570121.png",
+            "testing": "https://cdn-icons-png.flaticon.com/512/2164/2164832.png",
+            "bug": "https://cdn-icons-png.flaticon.com/512/1006/1006555.png",
+            "optimization": "https://cdn-icons-png.flaticon.com/512/2906/2906274.png",
+            "performance": "https://cdn-icons-png.flaticon.com/512/2906/2906274.png",
+        }
+        
+        # Intentar con los términos de búsqueda
+        for term in search_terms + tech_fallbacks:
+            try:
+                # Buscar coincidencia exacta primero
+                if term in flaticon_free_icons:
+                    icon_url = flaticon_free_icons[term]
+                    print(f"  🎯 Coincidencia exacta encontrada: {term}")
+                else:
+                    # Buscar coincidencia parcial
+                    icon_url = None
+                    for key, url in flaticon_free_icons.items():
+                        if key in term.lower() or term.lower() in key:
+                            icon_url = url
+                            print(f"  🎯 Coincidencia parcial encontrada: {key} para {term}")
+                            break
+                
+                if icon_url:
+                    print(f"  � Descargando desde Flaticon: {icon_url}")
+                    response = requests.get(icon_url, timeout=10, headers={
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                    })
+                    if response.status_code == 200:
+                        img = Image.open(io.BytesIO(response.content))
+                        # Convertir a RGBA y redimensionar
+                        img = img.convert("RGBA")
+                        img = img.resize((512, 512), Image.Resampling.LANCZOS)
+                        print(f"  ✅ Icono descargado exitosamente desde Flaticon")
+                        return img
+                    else:
+                        print(f"  ❌ Error HTTP {response.status_code} al descargar de Flaticon")
+                        
+            except Exception as e:
+                print(f"  ❌ Error buscando '{term}' en Flaticon: {str(e)[:50]}...")
+                continue
+        
+        # Si no se encontró nada específico, usar un icono por defecto
+        if flaticon_free_icons:
+            default_url = flaticon_free_icons["code"]  # Icono de código como fallback
+            print(f"  🔄 Usando icono por defecto de Flaticon...")
+            try:
+                response = requests.get(default_url, timeout=10, headers={
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                })
+                if response.status_code == 200:
+                    img = Image.open(io.BytesIO(response.content))
+                    img = img.convert("RGBA")
+                    img = img.resize((512, 512), Image.Resampling.LANCZOS)
+                    print(f"  ✅ Icono por defecto descargado desde Flaticon")
+                    return img
+            except Exception as e:
+                print(f"  ❌ Error descargando icono por defecto: {str(e)[:50]}...")
+                
+    except Exception as e:
+        print(f"  ❌ Error general en Flaticon: {str(e)[:50]}...")
+    
+    return None
+
+
 def download_icon(query: str) -> Image.Image:
     """
-    Descarga un icono PNG transparente usando simpleicons + cairosvg.
-    Sistema robusto con múltiples intentos y fallbacks.
-    query: 'windows', 'ubuntu', 'photoshop', etc.
+    Descarga un icono usando múltiples fuentes con sistema robusto de fallbacks:
+    1. SimpleIcons (con variaciones)
+    2. Flaticon (si SimpleIcons falla)
+    3. Icono genérico (último recurso)
     """
     import cairosvg
+    
+    print(f"\n🔍 === BÚSQUEDA DE ICONO PARA: '{query}' ===")
     
     # Lista de variaciones para intentar
     variations = [
         query.lower().replace(" ", ""),
         query.lower().replace(" ", "").replace("-", ""),
         query.lower().replace(" ", "").replace(".", ""),
+        query.lower().replace("_", ""),
         f"{query.lower()}dotcom",
         f"{query.lower()}js" if not query.lower().endswith("js") else query.lower()[:-2],
+        # Agregar más variaciones comunes
+        query.lower().replace("js", "javascript"),
+        query.lower().replace("py", "python"),
+        query.lower().replace("cpp", "cplusplus"),
+        query.lower().replace("cs", "csharp"),
     ]
     
-    # Iconos de fallback populares
+    # Iconos de fallback populares en SimpleIcons
     fallback_icons = [
         "code", "terminal", "gear", "star", "circle", "square", 
-        "triangle", "heart", "home", "user", "settings", "tool"
+        "triangle", "heart", "home", "user", "settings", "tool",
+        "javascript", "python", "react", "nodejs"
     ]
     
-    print(f"🔍 Buscando icono para: '{query}'")
-    
-    # Intentar con las variaciones del query original
+    # 1. FASE 1: SIMPLEICONS - Variaciones del query original
+    print(f"📍 FASE 1: Probando SimpleIcons con variaciones...")
     for i, variation in enumerate(variations):
         try:
             url = f"https://cdn.simpleicons.org/{variation}/ffffff"
-            print(f"  Intento {i+1}: {variation}")
-            r = requests.get(url, timeout=10)
+            print(f"  🔍 SimpleIcons intento {i+1}/{len(variations)}: '{variation}'")
+            r = requests.get(url, timeout=10, headers={
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            })
             if r.status_code == 200:
-                png_bytes = cairosvg.svg2png(bytestring=r.content, output_width=512, output_height=512)
-                print(f"  ✅ Encontrado: {variation}")
-                return Image.open(io.BytesIO(png_bytes)).convert("RGBA")
+                try:
+                    png_bytes = cairosvg.svg2png(bytestring=r.content, output_width=512, output_height=512)
+                    img = Image.open(io.BytesIO(png_bytes)).convert("RGBA")
+                    print(f"  ✅ ¡ÉXITO! Encontrado en SimpleIcons: '{variation}'")
+                    return img
+                except Exception as convert_error:
+                    print(f"  ⚠️  SVG encontrado pero error al convertir: {str(convert_error)[:50]}...")
+                    continue
+            else:
+                print(f"  ❌ No encontrado (HTTP {r.status_code})")
         except Exception as e:
-            print(f"  ❌ Error con {variation}: {str(e)[:50]}...")
+            print(f"  ❌ Error de conexión: {str(e)[:50]}...")
             continue
     
-    # Si no funciona ninguna variación, intentar con iconos de fallback
-    print(f"⚠️  No se encontró '{query}', probando iconos de fallback...")
-    for fallback in fallback_icons:
+    # 2. FASE 2: SIMPLEICONS - Iconos de fallback
+    print(f"\n📍 FASE 2: Probando SimpleIcons con iconos de fallback...")
+    for i, fallback in enumerate(fallback_icons):
         try:
             url = f"https://cdn.simpleicons.org/{fallback}/ffffff"
-            print(f"  Fallback: {fallback}")
-            r = requests.get(url, timeout=10)
+            print(f"  🔍 SimpleIcons fallback {i+1}/{len(fallback_icons)}: '{fallback}'")
+            r = requests.get(url, timeout=10, headers={
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            })
             if r.status_code == 200:
-                png_bytes = cairosvg.svg2png(bytestring=r.content, output_width=512, output_height=512)
-                print(f"  ✅ Usando fallback: {fallback}")
-                return Image.open(io.BytesIO(png_bytes)).convert("RGBA")
-        except Exception:
+                try:
+                    png_bytes = cairosvg.svg2png(bytestring=r.content, output_width=512, output_height=512)
+                    img = Image.open(io.BytesIO(png_bytes)).convert("RGBA")
+                    print(f"  ✅ Usando fallback de SimpleIcons: '{fallback}'")
+                    return img
+                except Exception as convert_error:
+                    print(f"  ⚠️  SVG encontrado pero error al convertir: {str(convert_error)[:50]}...")
+                    continue
+            else:
+                print(f"  ❌ Fallback no disponible (HTTP {r.status_code})")
+        except Exception as e:
+            print(f"  ❌ Error de conexión: {str(e)[:50]}...")
             continue
     
-    # Último recurso: crear un icono genérico
-    print(f"🔧 Creando icono genérico para '{query}'")
-    return create_generic_icon(query)
+    # 3. FASE 3: FLATICON
+    print(f"\n📍 FASE 3: Intentando con Flaticon...")
+    flaticon_result = download_flaticon_icon(query)
+    if flaticon_result:
+        print(f"  ✅ ¡ÉXITO! Icono obtenido desde Flaticon")
+        return flaticon_result
+    else:
+        print(f"  ❌ Flaticon también falló")
+    
+    # 4. FASE 4: ÚLTIMO RECURSO - Crear un icono genérico
+    print(f"\n� FASE 4: Creando icono genérico...")
+    print(f"⚠️  Todas las fuentes online fallaron para '{query}'")
+    print(f"🔧 Generando icono genérico con las iniciales...")
+    generic_icon = create_generic_icon(query)
+    print(f"  ✅ Icono genérico creado exitosamente")
+    return generic_icon
 
 def create_generic_icon(text: str) -> Image.Image:
     """
@@ -417,7 +674,7 @@ def build_thumbnail(
     # Extraer configuraciones
     canvas_w = config['canvas']['width']
     canvas_h = config['canvas']['height']
-    bg_blur = config['background']['blur_radius']
+    bg_blur_radius = config['background']['blur_radius']
     text_max_width = config['text']['max_width']
     text_offset_y = config['layout']['text_offset_y']
     icons_offset_y = config['layout']['icons_offset_y']
@@ -433,7 +690,7 @@ def build_thumbnail(
     # 1) Fondo
     bg = Image.open(background_path).convert("RGBA")
     bg = bg.resize((canvas_w, canvas_h), Image.LANCZOS)
-    bg_blur = bg.filter(ImageFilter.GaussianBlur(bg_blur))
+    bg_blur = bg.filter(ImageFilter.GaussianBlur(bg_blur_radius))
 
     # 2) Texto
     text_img, font_size = render_text_block(text, int(canvas_w * text_max_width), font_path, config)
@@ -484,19 +741,94 @@ def build_thumbnail(
     png_quality = config['output']['png_quality']
     canvas.convert("RGB").save(out_png_path, quality=png_quality)
 
-    # 6) Intentar guardar PSD (opcional)
-    if config['output']['create_psd'] and out_psd and out_psd.endswith('.psd') and PSD_AVAILABLE:
-        try:
-            # PSD simplificado - solo la imagen final como una capa
-            nl_layer = nl.Image(name="Thumbnail_Complete", image=canvas)
-            root = nl.Group("root", [nl_layer])
-            with open(out_psd_path, "wb") as f:
-                nl.export(root, f)
-            print(f"📄 PSD creado: {out_psd_path}")
-        except Exception as e:
-            print(f"⚠️  Error creando PSD: {e}")
-    elif config['output']['create_psd'] and not PSD_AVAILABLE:
-        print("⚠️  PSD solicitado pero pytoshop no está disponible.")
+    # 6) Intentar guardar PSD con capas separadas (opcional)
+    if config['output']['create_psd'] and out_psd and out_psd.endswith('.psd'):
+        print(f"🎨 Creando PSD con capas separadas...")
+        
+        # Intentar primero con psd-tools (más fácil)
+        if PSD_TOOLS_AVAILABLE:
+            try:
+                print(f"   📦 Usando psd-tools...")
+                
+                # Crear PSD nuevo
+                psd = PSDImage.new("RGB", (canvas_w, canvas_h), color=(0, 0, 0))
+                
+                # Función auxiliar para crear capa con psd-tools
+                def create_psd_layer(pil_image, layer_name):
+                    layer = PixelLayer.frompil(pil_image, psd)
+                    layer.name = layer_name
+                    return layer
+                
+                # Lista para almacenar capas
+                layers_to_add = []
+                
+                # CAPA 1: Fondo con desenfoque
+                print(f"   • Creando capa de fondo...")
+                bg_layer = create_psd_layer(bg_blur, "Background_Blur")
+                layers_to_add.append(bg_layer)
+                
+                # CAPA 2: Texto principal con sombras
+                print(f"   • Creando capa de texto...")
+                text_canvas = Image.new("RGBA", (canvas_w, canvas_h), (0, 0, 0, 0))
+                text_canvas.alpha_composite(text_with_shadow, (text_x, text_y))
+                text_layer = create_psd_layer(text_canvas, "Text_Main")
+                layers_to_add.append(text_layer)
+                
+                # CAPAS 3+: Iconos individuales
+                for i, icon in enumerate(icons, 1):
+                    print(f"   • Creando capa de icono {i}...")
+                    # Calcular posición individual de cada icono
+                    individual_x = (canvas_w - total_icons_w) // 2
+                    for j in range(i - 1):
+                        individual_x += icons[j].width + icon_gap
+                    
+                    # Crear canvas individual para este icono
+                    icon_canvas = Image.new("RGBA", (canvas_w, canvas_h), (0, 0, 0, 0))
+                    icon_canvas.alpha_composite(icon, (individual_x, icons_y))
+                    
+                    # Nombre descriptivo basado en la query del icono
+                    icon_name = f"Icon_{i}_{icon_queries[i-1] if i-1 < len(icon_queries) else 'unknown'}"
+                    icon_layer = create_psd_layer(icon_canvas, icon_name)
+                    layers_to_add.append(icon_layer)
+                
+                # Agregar todas las capas al PSD
+                print(f"   • Agregando {len(layers_to_add)} capas al PSD...")
+                for layer in layers_to_add:
+                    psd.append(layer)
+                
+                # Guardar PSD
+                print(f"   • Guardando archivo PSD...")
+                psd.save(out_psd_path)
+                
+                print(f"✅ PSD creado con {len(layers_to_add)} capas usando psd-tools: {out_psd_path}")
+                print(f"📋 Capas incluidas:")
+                print(f"   • Background_Blur (fondo con desenfoque)")
+                print(f"   • Text_Main (texto principal con sombras)")
+                for i, query in enumerate(icon_queries, 1):
+                    print(f"   • Icon_{i}_{query} (icono individual)")
+                    
+            except Exception as e:
+                print(f"❌ Error creando PSD con psd-tools: {e}")
+                import traceback
+                traceback.print_exc()
+                
+                # Fallback a pytoshop si psd-tools falla
+                if PSD_AVAILABLE:
+                    print(f"💡 Intentando con pytoshop como fallback...")
+                    print(f"⚠️  pytoshop tiene limitaciones, se recomienda instalar psd-tools")
+                else:
+                    print(f"⚠️  Pytoshop no disponible como fallback")
+                    
+        # Si psd-tools no está disponible, mostrar advertencia
+        elif PSD_AVAILABLE:
+            print(f"⚠️  Solo pytoshop disponible - funcionalidad limitada")
+            print(f"💡 Para mejor compatibilidad, instala: pip install psd-tools")
+        else:
+            print("⚠️  Ni psd-tools ni pytoshop están disponibles para crear PSD.")
+            print("💡 Para habilitar creación de PSD, instala:")
+            print("   pip install psd-tools  # Recomendado")
+            print("   pip install pytoshop   # Alternativa")
+            print("   pip install pytoshop")
 
     print(f"✅ Thumbnail generado: {out_png_path}")
     print(f"📐 Tamaño de iconos usado: {icon_max_width}px")

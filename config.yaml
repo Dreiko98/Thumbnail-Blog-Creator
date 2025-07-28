@@ -48,4 +48,4 @@ layout:
 # Configuración de calidad de salida
 output:
   png_quality: 95         # default: 95 - Calidad JPEG/PNG (1-100)
-  create_psd: false       # default: false - Crear archivo PSD (experimental)
+  create_psd: true        # default: false - Crear archivo PSD con capas separadas

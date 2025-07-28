@@ -55,3 +55,9 @@ config.local.yaml
 
 # Variables de entorno
 *.env
+
+# Archivos de prueba y desarrollo
+test_*.py
+demo_*.py
+*_test.py
+*_demo.py

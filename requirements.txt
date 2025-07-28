@@ -1,8 +1,44 @@
-pillow
-pytoshop
-requests
-cairosvg
-six
-PyYAML
-six
-PyYAML
+# ============================================================================
+# THUMBNAIL BLOG CREATOR - DEPENDENCIAS
+# ============================================================================
+# Este archivo contiene todas las librerías necesarias para ejecutar
+# el generador de thumbnails con todas sus funcionalidades.
+# 
+# Para instalar: pip install -r requirements.txt
+# ============================================================================
+
+# DEPENDENCIAS PRINCIPALES
+# ----------------------------------------------------------------------------
+Pillow>=10.0.0          # Manipulación avanzada de imágenes (PNG, JPEG, etc.)
+requests>=2.31.0        # Descargas HTTP para iconos desde SimpleIcons
+PyYAML>=6.0.1           # Lectura y escritura de archivos de configuración YAML
+cairosvg>=2.7.0         # Conversión de SVG a PNG para iconos vectoriales
+
+# DEPENDENCIAS PARA EXPORTACIÓN PSD (OPCIONAL)
+# ----------------------------------------------------------------------------
+pytoshop>=1.2.0         # Generación de archivos PSD con capas separadas
+six>=1.16.0             # Compatibilidad Python 2/3 (requerida por pytoshop)
+
+# DEPENDENCIAS DE DESARROLLO Y TESTING (OPCIONAL)
+# ----------------------------------------------------------------------------
+# colorama>=0.4.6       # Colores en terminal (para mejorar UX del modo interactivo)
+# pytest>=7.0.0         # Framework de testing para pruebas unitarias
+# black>=23.0.0         # Formateador de código Python
+# flake8>=6.0.0         # Linter para verificar calidad del código
+
+# NOTAS IMPORTANTES:
+# ----------------------------------------------------------------------------
+# - Todas las librerías estándar de Python están incluidas por defecto:
+#   datetime, os, pathlib, platform, io, math, textwrap, typing, subprocess, sys
+# 
+# - pytoshop es opcional: si no está instalado, la generación de PSD se omite
+#   automáticamente sin afectar la funcionalidad principal
+# 
+# - cairosvg requiere dependencias del sistema en algunas distribuciones Linux:
+#   Ubuntu/Debian: sudo apt-get install libcairo2-dev libgirepository1.0-dev
+#   CentOS/RHEL: sudo yum install cairo-devel gobject-introspection-devel
+#   macOS: brew install cairo gobject-introspection
+# 
+# - Para entornos de producción, considera fijar versiones exactas (==) 
+#   en lugar de usar (>=) para garantizar reproducibilidad
+# ============================================================================
