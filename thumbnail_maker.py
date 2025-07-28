@@ -5,6 +5,7 @@ import os
 import textwrap
 from pathlib import Path
 from typing import List, Tuple
+import platform
 
 import requests
 from PIL import Image, ImageDraw, ImageFont, ImageFilter
@@ -24,9 +25,42 @@ TEXT_INNER_SHADOW_BLUR = 6
 TEXT_COLOR = (255, 255, 255, 255)
 ICON_OUTER_SHADOW_OFFSET = (4, 4)
 ICON_OUTER_SHADOW_BLUR = 8
-ICON_MAX_WIDTH = 380                     # ancho máx por icono
-ICON_GAP = 40                            # separación entre iconos
-FONT_PATH = "C:/Windows/Fonts/arial.ttf"  # ajusta según tu OS
+ICON_MAX_WIDTH = 200                     # ancho máx por icono (reducido de 380 a 200)
+ICON_GAP = 30                            # separación entre iconos (reducido de 40 a 30)
+
+# Detectar fuente según el OS
+def get_font_path():
+    system = platform.system()
+    if system == "Linux":
+        # Probar diferentes fuentes comunes en Linux
+        fonts = [
+            "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+            "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
+            "/usr/share/fonts/truetype/noto/NotoSans-Bold.ttf",
+            "/usr/share/fonts/TTF/DejaVuSans-Bold.ttf",
+            "/System/Library/Fonts/Arial.ttf"  # fallback
+        ]
+    elif system == "Windows":
+        fonts = [
+            "C:/Windows/Fonts/arial.ttf",
+            "C:/Windows/Fonts/calibri.ttf"
+        ]
+    elif system == "Darwin":  # macOS
+        fonts = [
+            "/System/Library/Fonts/Arial.ttf",
+            "/System/Library/Fonts/Helvetica.ttc"
+        ]
+    else:
+        fonts = []
+    
+    for font in fonts:
+        if os.path.exists(font):
+            return font
+    
+    # Si no encuentra ninguna, usar fuente por defecto de PIL
+    return None
+
+FONT_PATH = get_font_path()
 # ------------------------------------------------
 
 
@@ -88,14 +122,27 @@ def render_text_block(text: str, max_width_px: int, font_path: str, start_size=1
     """
     size = start_size
     while size > 10:
-        font = ImageFont.truetype(font_path, size)
+        try:
+            if font_path and os.path.exists(font_path):
+                font = ImageFont.truetype(font_path, size)
+            else:
+                # Usar fuente por defecto si no se encuentra la especificada
+                font = ImageFont.load_default()
+        except (OSError, IOError):
+            # Si falla, usar fuente por defecto
+            font = ImageFont.load_default()
+            
         # partimos el texto por palabras para que cada línea no supere max_width_px
         words = text.split()
         lines = []
         cur = []
         for w in words:
             test = " ".join(cur + [w])
-            w_px = font.getlength(test)
+            try:
+                w_px = font.getlength(test)
+            except AttributeError:
+                # Para versiones antiguas de PIL
+                w_px = font.getsize(test)[0]
             if w_px <= max_width_px:
                 cur.append(w)
             else:
@@ -104,7 +151,11 @@ def render_text_block(text: str, max_width_px: int, font_path: str, start_size=1
         if cur:
             lines.append(" ".join(cur))
 
-        widths = [font.getlength(l) for l in lines]
+        try:
+            widths = [font.getlength(l) for l in lines]
+        except AttributeError:
+            widths = [font.getsize(l)[0] for l in lines]
+            
         height = int(size * TEXT_LINE_SPACING * len(lines))
         if max(widths) <= max_width_px:
             # render
@@ -112,23 +163,16 @@ def render_text_block(text: str, max_width_px: int, font_path: str, start_size=1
             draw = ImageDraw.Draw(img)
             y = 0
             for l in lines:
-                w = font.getlength(l)
+                try:
+                    w = font.getlength(l)
+                except AttributeError:
+                    w = font.getsize(l)[0]
                 draw.text(((max_width_px - w) / 2, y), l, font=font, fill=TEXT_COLOR)
                 y += int(size * TEXT_LINE_SPACING)
             return img.crop(img.getbbox()), size
         size -= 4
     raise RuntimeError("No pude ajustar el texto, es demasiado largo.")
 
-
-# ---------- Construir PSD ----------
-def export_psd(layers: List[Tuple[str, Image.Image]], out_path: Path):
-    """
-    layers: lista [(nombre, PIL.Image RGBA), ...] en orden de abajo hacia arriba.
-    """
-    nl_layers = [nl.Image(name=name, image=im) for name, im in layers]
-    root = nl.Group("root", nl_layers)
-    with open(out_path, "wb") as f:
-        nl.export(root, f)
 
 
 # ---------- Pipeline principal ----------
@@ -138,7 +182,11 @@ def build_thumbnail(
     icon_queries: List[str],
     out_png: str = "thumbnail.png",
     out_psd: str = "thumbnail.psd",
+    icon_size: int = None,  # Nuevo parámetro para tamaño de iconos
 ):
+    # Usar el tamaño de icono personalizado o el por defecto
+    icon_max_width = icon_size if icon_size else ICON_MAX_WIDTH
+    
     # 1) Fondo
     bg = Image.open(background_path).convert("RGBA")
     bg = bg.resize((CANVAS_W, CANVAS_H), Image.LANCZOS)
@@ -154,7 +202,7 @@ def build_thumbnail(
     for q in icon_queries:
         icon = download_icon(q).convert("RGBA")
         # redimensionar manteniendo proporción
-        scale = ICON_MAX_WIDTH / icon.width
+        scale = icon_max_width / icon.width
         icon = icon.resize((int(icon.width * scale), int(icon.height * scale)), Image.LANCZOS)
         icon = drop_shadow(icon, ICON_OUTER_SHADOW_OFFSET, ICON_OUTER_SHADOW_BLUR)
         icons.append(icon)
@@ -179,18 +227,15 @@ def build_thumbnail(
     # 5) Guardar PNG/JPG
     canvas.convert("RGB").save(out_png, quality=95)
 
-    # 6) Guardar PSD por capas
-    layers_for_psd = [
-        ("Background_Blur", bg_blur),
-        ("Text", text_img),                      # sin sombra interior? ya incluida
-        ("Text_Shadow+Outer", text_with_shadow), # o puedes separar si quieres
-    ]
-    for idx, icon in enumerate(icons, 1):
-        layers_for_psd.append((f"Icon_{idx}", icon))
+    # 6) Intentar guardar PSD (opcional)
+    if out_psd and out_psd.endswith('.psd'):
+        print("Nota: Generación de PSD deshabilitada temporalmente debido a problemas de compatibilidad.")
+        print("Solo se genera el archivo PNG.")
 
-    export_psd(layers_for_psd, Path(out_psd))
-
-    print(f"Listo: {out_png} y {out_psd}")
+    print(f"✅ Thumbnail generado: {out_png}")
+    print(f"📐 Tamaño de iconos usado: {icon_max_width}px")
+    if icons:
+        print(f"🎨 Iconos incluidos: {', '.join(icon_queries)}")
 
 
 # ----------- CLI -----------
@@ -202,6 +247,7 @@ if __name__ == "__main__":
     parser.add_argument("-i", "--icon", action="append", default=[], help="Nombre(s) de iconos (simpleicons)")
     parser.add_argument("--out-png", default="thumbnail.png")
     parser.add_argument("--out-psd", default="thumbnail.psd")
+    parser.add_argument("--icon-size", type=int, help=f"Tamaño máximo de iconos en píxeles (default: {ICON_MAX_WIDTH})")
     args = parser.parse_args()
 
-    build_thumbnail(args.background, args.text, args.icon, args.out_png, args.out_psd)
+    build_thumbnail(args.background, args.text, args.icon, args.out_png, args.out_psd, args.icon_size)

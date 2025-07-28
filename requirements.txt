@@ -2,3 +2,5 @@ pillow
 pytoshop
 requests
 cairosvg
+six
+six
