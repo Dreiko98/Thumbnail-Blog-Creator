@@ -40,6 +40,7 @@ tmp/
 Thumbs.db
 
 # --- Salidas del script ---
+assets/
 outputs/
 renders/
 thumbnails/
@@ -48,6 +49,9 @@ export/
 *.jpg
 *.jpeg
 *.psd
+
+# Config personalizado (mantener config.yaml como ejemplo)
+config.local.yaml
 
 # Variables de entorno
 *.env

@@ -1,0 +1,51 @@
+# Configuración del Generador de Thumbnails
+# Todos los valores tienen comentarios con valores por defecto como referencia
+
+# Dimensiones del canvas final
+canvas:
+  width: 1920      # default: 1920 - Ancho en píxeles
+  height: 1080     # default: 1080 - Alto en píxeles
+
+# Configuración del fondo
+background:
+  blur_radius: 25  # default: 25 - Radio del desenfoque gaussiano
+
+# Configuración del texto
+text:
+  max_width: 0.8          # default: 0.8 - Porcentaje del ancho del canvas (0.0-1.0)
+  line_spacing: 1.1       # default: 1.1 - Multiplicador del espaciado entre líneas
+  color: [255, 255, 255, 255]  # default: [255, 255, 255, 255] - Color RGBA del texto
+  start_size: 160         # default: 160 - Tamaño inicial de fuente en píxeles
+  
+  # Sombra exterior del texto
+  outer_shadow:
+    offset: [4, 4]        # default: [4, 4] - Desplazamiento [x, y] en píxeles
+    blur: 8               # default: 8 - Radio de desenfoque
+    color: [0, 0, 0, 180] # default: [0, 0, 0, 180] - Color RGBA de la sombra
+  
+  # Sombra interior del texto
+  inner_shadow:
+    offset: [3, 3]        # default: [3, 3] - Desplazamiento [x, y] en píxeles
+    blur: 6               # default: 6 - Radio de desenfoque
+    color: [0, 0, 0, 120] # default: [0, 0, 0, 120] - Color RGBA de la sombra
+
+# Configuración de iconos
+icons:
+  max_width: 200          # default: 200 - Ancho máximo por icono en píxeles
+  gap: 30                 # default: 30 - Separación entre iconos en píxeles
+  
+  # Sombra exterior de los iconos
+  outer_shadow:
+    offset: [4, 4]        # default: [4, 4] - Desplazamiento [x, y] en píxeles
+    blur: 8               # default: 8 - Radio de desenfoque
+    color: [0, 0, 0, 180] # default: [0, 0, 0, 180] - Color RGBA de la sombra
+
+# Configuración de posicionamiento
+layout:
+  text_offset_y: -80      # default: -80 - Desplazamiento vertical del texto desde el centro
+  icons_offset_y: 40      # default: 40 - Distancia entre texto e iconos
+
+# Configuración de calidad de salida
+output:
+  png_quality: 95         # default: 95 - Calidad JPEG/PNG (1-100)
+  create_psd: false       # default: false - Crear archivo PSD (experimental)

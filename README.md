@@ -1,13 +1,13 @@
-Aquí tienes un **README.md** listo para tu repo:
-
 # Thumbnail Maker (Python)
 
 Script para generar **thumbnails estilo blog/YouTube** de forma automática:
 
 - Fondo con **desenfoque gaussiano**
-- Texto centrado en **Arial blanco**, con **sombra exterior** + **sombra interior**
+- Texto centrado con **sombra exterior** + **sombra interior**
 - **Uno o varios iconos PNG** descargados automáticamente (SimpleIcons)
-- Exporta **PNG/JPG de alta calidad** y **PSD con capas editables** (para seguir trabajando en Photoshop)
+- **Configuración totalmente personalizable** vía YAML
+- **Organización automática** de archivos por fecha
+- Exporta **PNG de alta calidad** (PSD experimental)
 
 ---
 
@@ -17,8 +17,8 @@ Script para generar **thumbnails estilo blog/YouTube** de forma automática:
 - Dependencias:
 
 ```bash
-pip install pillow pytoshop requests cairosvg
-````
+pip install pillow pytoshop requests cairosvg PyYAML
+```
 
 > **Tip (Linux):** instala Arial con `sudo apt install ttf-mscorefonts-installer` o cambia la ruta a otra fuente en la config.
 

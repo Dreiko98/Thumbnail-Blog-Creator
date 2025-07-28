@@ -1,0 +1,42 @@
+# Ejemplo de configuración personalizada para thumbnails más minimalistas
+# Copia este archivo como config.local.yaml y modifica según tus necesidades
+
+canvas:
+  width: 1920      # Mantener proporción 16:9
+  height: 1080     
+
+background:
+  blur_radius: 15  # Menos desenfoque para un look más nítido
+
+text:
+  max_width: 0.7   # Texto más estrecho para mejor legibilidad
+  line_spacing: 1.2
+  color: [255, 255, 255, 255]
+  start_size: 140  # Texto ligeramente más pequeño
+  
+  outer_shadow:
+    offset: [3, 3]   # Sombra más sutil
+    blur: 6
+    color: [0, 0, 0, 150]
+  
+  inner_shadow:
+    offset: [2, 2]   # Sombra interior más sutil
+    blur: 4
+    color: [0, 0, 0, 100]
+
+icons:
+  max_width: 150   # Iconos más pequeños por defecto
+  gap: 25          # Menos espacio entre iconos
+  
+  outer_shadow:
+    offset: [3, 3]
+    blur: 6
+    color: [0, 0, 0, 150]
+
+layout:
+  text_offset_y: -60   # Texto menos centrado hacia arriba
+  icons_offset_y: 35   # Iconos más cerca del texto
+
+output:
+  png_quality: 90      # Calidad ligeramente menor para archivos más pequeños
+  create_psd: false

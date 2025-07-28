@@ -3,4 +3,6 @@ pytoshop
 requests
 cairosvg
 six
+PyYAML
 six
+PyYAML
