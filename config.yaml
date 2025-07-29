@@ -8,7 +8,7 @@ canvas:
 
 # Configuración del fondo
 background:
-  blur_radius: 25  # default: 25 - Radio del desenfoque gaussiano
+  blur_radius: 15  # default: 25 - Radio del desenfoque gaussiano
 
 # Configuración del texto
 text:
@@ -26,7 +26,7 @@ text:
   # Sombra interior del texto
   inner_shadow:
     offset: [3, 3]        # default: [3, 3] - Desplazamiento [x, y] en píxeles
-    blur: 6               # default: 6 - Radio de desenfoque
+    blur: 3               # default: 6 - Radio de desenfoque
     color: [0, 0, 0, 120] # default: [0, 0, 0, 120] - Color RGBA de la sombra
 
 # Configuración de iconos

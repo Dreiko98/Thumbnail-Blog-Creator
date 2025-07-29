@@ -1,42 +1,51 @@
-# Ejemplo de configuración personalizada para thumbnails más minimalistas
-# Copia este archivo como config.local.yaml y modifica según tus necesidades
+# Configuración de ejemplo para el Generador de Thumbnails
+# Copia este archivo como config.yaml y personaliza según tus necesidades
 
+# Dimensiones del canvas final
 canvas:
-  width: 1920      # Mantener proporción 16:9
-  height: 1080     
+  width: 1920      # Ancho en píxeles
+  height: 1080     # Alto en píxeles
 
+# Configuración del fondo
 background:
-  blur_radius: 15  # Menos desenfoque para un look más nítido
+  blur_radius: 15  # Radio del desenfoque gaussiano
 
+# Configuración del texto
 text:
-  max_width: 0.7   # Texto más estrecho para mejor legibilidad
-  line_spacing: 1.2
-  color: [255, 255, 255, 255]
-  start_size: 140  # Texto ligeramente más pequeño
+  max_width: 0.8          # Porcentaje del ancho del canvas (0.0-1.0)
+  line_spacing: 1.1       # Multiplicador del espaciado entre líneas
+  color: [255, 255, 255, 255]  # Color RGBA del texto
+  start_size: 160         # Tamaño inicial de fuente en píxeles
   
+  # Sombra exterior del texto
   outer_shadow:
-    offset: [3, 3]   # Sombra más sutil
-    blur: 6
-    color: [0, 0, 0, 150]
+    offset: [4, 4]        # Desplazamiento [x, y] en píxeles
+    blur: 8               # Radio de desenfoque
+    color: [0, 0, 0, 180] # Color RGBA de la sombra
   
+  # Sombra interior del texto
   inner_shadow:
-    offset: [2, 2]   # Sombra interior más sutil
-    blur: 4
-    color: [0, 0, 0, 100]
+    offset: [3, 3]        # Desplazamiento [x, y] en píxeles
+    blur: 3               # Radio de desenfoque
+    color: [0, 0, 0, 120] # Color RGBA de la sombra
 
+# Configuración de iconos
 icons:
-  max_width: 150   # Iconos más pequeños por defecto
-  gap: 25          # Menos espacio entre iconos
+  max_width: 200          # Ancho máximo por icono en píxeles
+  gap: 30                 # Separación entre iconos en píxeles
   
+  # Sombra exterior de los iconos
   outer_shadow:
-    offset: [3, 3]
-    blur: 6
-    color: [0, 0, 0, 150]
+    offset: [4, 4]        # Desplazamiento [x, y] en píxeles
+    blur: 8               # Radio de desenfoque
+    color: [0, 0, 0, 180] # Color RGBA de la sombra
 
+# Configuración de posicionamiento
 layout:
-  text_offset_y: -60   # Texto menos centrado hacia arriba
-  icons_offset_y: 35   # Iconos más cerca del texto
+  text_offset_y: -80      # Desplazamiento vertical del texto desde el centro
+  icons_offset_y: 40      # Distancia entre texto e iconos
 
+# Configuración de calidad de salida
 output:
-  png_quality: 90      # Calidad ligeramente menor para archivos más pequeños
-  create_psd: false
+  png_quality: 95         # Calidad JPEG/PNG (1-100)
+  create_psd: true        # Crear archivo PSD con capas separadas

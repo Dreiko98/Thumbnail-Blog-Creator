@@ -10,13 +10,24 @@
 # DEPENDENCIAS PRINCIPALES
 # ----------------------------------------------------------------------------
 Pillow>=10.0.0          # Manipulación avanzada de imágenes (PNG, JPEG, etc.)
-requests>=2.31.0        # Descargas HTTP para iconos desde SimpleIcons
+requests>=2.31.0        # Descargas HTTP para iconos desde múltiples fuentes
 PyYAML>=6.0.1           # Lectura y escritura de archivos de configuración YAML
 cairosvg>=2.7.0         # Conversión de SVG a PNG para iconos vectoriales
 
-# DEPENDENCIAS PARA EXPORTACIÓN PSD (OPCIONAL)
+# BÚSQUEDA DE ICONOS EN GOOGLE IMAGES
 # ----------------------------------------------------------------------------
-pytoshop>=1.2.0         # Generación de archivos PSD con capas separadas
+beautifulsoup4>=4.12.0  # Parsing HTML para scraping de Google Images
+lxml>=4.9.0             # Parser XML/HTML rápido para BeautifulSoup
+
+# GENERACIÓN DE ARCHIVOS PSD (OPCIONAL)
+# ----------------------------------------------------------------------------
+psd-tools>=1.9.0        # Creación y manipulación de archivos PSD de Photoshop
+six>=1.16.0             # Dependencia de psd-tools para compatibilidad Python 2/3
+
+# DEPENDENCIAS PARA EXPORTACIÓN PSD (RECOMENDADAS)
+# ----------------------------------------------------------------------------
+psd-tools>=1.9.27       # Generación de archivos PSD con capas separadas (RECOMENDADO)
+pytoshop>=1.2.0         # Alternativa para PSD (fallback legacy)
 six>=1.16.0             # Compatibilidad Python 2/3 (requerida por pytoshop)
 
 # DEPENDENCIAS DE DESARROLLO Y TESTING (OPCIONAL)
