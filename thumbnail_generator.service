@@ -1,0 +1,17 @@
+[Unit]
+Description=Thumbnail Generator Web App
+After=network.target
+Requires=network.target
+
+[Service]
+Type=exec
+User=germanmallo
+Group=germanmallo
+WorkingDirectory=/home/germanmallo/auto_thumbnail
+Environment="PATH=/home/germanmallo/auto_thumbnail/.venv/bin"
+ExecStart=/home/germanmallo/auto_thumbnail/.venv/bin/gunicorn --workers 3 --bind unix:/tmp/thumbnail.sock wsgi:app
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
