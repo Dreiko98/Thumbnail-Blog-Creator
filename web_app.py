@@ -27,11 +27,20 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = 'thumbnail_generator_2025'
 app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024  # 50MB máximo
 
-# Directorio temporal para archivos subidos
-UPLOAD_FOLDER = tempfile.mkdtemp(prefix='thumbnail_uploads_')
-RESULTS_FOLDER = tempfile.mkdtemp(prefix='thumbnail_results_')
+# Directorio temporal para archivos subidos - usar carpetas del proyecto, no /tmp
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+UPLOAD_FOLDER = os.path.join(SCRIPT_DIR, '.uploads')
+RESULTS_FOLDER = os.path.join(SCRIPT_DIR, '.results')
+
+# Crear carpetas si no existen
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+os.makedirs(RESULTS_FOLDER, exist_ok=True)
+
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['RESULTS_FOLDER'] = RESULTS_FOLDER
+
+print(f"📁 Carpeta de uploads: {UPLOAD_FOLDER}")
+print(f"📁 Carpeta de resultados: {RESULTS_FOLDER}")
 
 # Extensiones permitidas
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'bmp', 'webp', 'svg'}
@@ -41,7 +50,7 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 def cleanup_old_files():
-    """Limpia archivos temporales antiguos (más de 2 horas)."""
+    """Limpia archivos temporales antiguos (más de 24 horas) - NO se ejecuta en cada carga."""
     try:
         current_time = time.time()
         for folder in [UPLOAD_FOLDER, RESULTS_FOLDER]:
@@ -50,7 +59,7 @@ def cleanup_old_files():
                     file_path = os.path.join(folder, filename)
                     if os.path.isfile(file_path):
                         file_age = current_time - os.path.getctime(file_path)
-                        if file_age > 7200:  # 2 horas (aumentado de 1 hora)
+                        if file_age > 86400:  # 24 horas - más conservador
                             try:
                                 os.remove(file_path)
                                 print(f"🗑️  Archivo antiguo eliminado: {filename}")
@@ -62,7 +71,7 @@ def cleanup_old_files():
 @app.route('/')
 def index():
     """Página principal de la aplicación."""
-    cleanup_old_files()
+    # No limpiar archivos en cada carga - hacerlo solo en shutdown
     return render_template('index.html')
 
 @app.route('/upload', methods=['POST'])
